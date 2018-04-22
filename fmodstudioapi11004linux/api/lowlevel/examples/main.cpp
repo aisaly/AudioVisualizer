@@ -69,21 +69,28 @@ void OnDraw() {
 	res = dsp->getParameterData(FMOD_DSP_FFT_SPECTRUMDATA, (void**)&spectrumData, 0, 0,0);
 	FMOD_DSP_PARAMETER_FFT *fft = (FMOD_DSP_PARAMETER_FFT*)spectrumData;
 
-	glBegin(GL_LINE_STRIP);
-	if(fft){
-		for(int i=0;i<fft->numchannels;++i){
-
-			glColor3f(1.0-4*(*fft->spectrum[i]),4*(*fft->spectrum[i]),0);
-			//glColor3f(1.0, 4.0, 3.0);
-
-			glVertex2f(10+i,0.5+20*(*fft->spectrum[i]));
 	
+	if(fft){
+		std::cout<<" channels:" <<fft->numchannels;
+		for(int i=0;i<fft->numchannels;++i){
+			glBegin(GL_POLYGON);
+			glColor3f(1.0-4*(*fft->spectrum[i]),4*(*fft->spectrum[i]),0);
+
+
+			glVertex2f(30, 5+ 500*(*fft->spectrum[i]));
+			glVertex2f(60, 4+ 500*(*fft->spectrum[i]));
+			glVertex2f(300, 1+ 500*(*fft->spectrum[i]));
+			glVertex2f(160, 2+ 500*(*fft->spectrum[i]));
+
+			//speck
+			//glVertex2f(10+i,0.5+20*(*fft->spectrum[i]));
+			glEnd();
 
 		}
 	}
 
 
-	glEnd();
+	
 	
 
 	// FSOUND_DSP_GetSpectrum returns a pointer to an array of 512
