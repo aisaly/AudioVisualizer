@@ -29,7 +29,7 @@ void myInit(void)
 
 	// Set picture color to green (in RGB model)
 	// as only argument corresponding to G (Green) is 1.0 and rest are 0.0
-	glColor3f(0.0, 1.0, 0.0);
+	glColor3f(1.0, 1.0, 1.0);
 
 	// Set width of point to one unit
 	glPointSize(1.0);
@@ -43,7 +43,6 @@ void myInit(void)
 // Function to display animation
 void display(void)
 {
-
 	//update the FMOD system
 	res = sys->update();
 
@@ -52,57 +51,115 @@ void display(void)
 	FMOD_DSP_PARAMETER_FFT *fft = (FMOD_DSP_PARAMETER_FFT*)spectrumData;
 
 	if (fft) {
-		// Outer loop to make figure moving
-		// loop variable j iterated up to 10000,
-		// indicating that figure will be in motion for large amount of time
-		// around 10000/6.29 = 1590 time it will revolve
+		// Loop to create animation
 		// j is incremented by small value to make motion smoother
-		for (j = 0; j < 10000; j += 0.01)
+		for (j = 0; j < 100; j += 0.01)
 		{
 			float curr0 = *fft->spectrum[0];
 			float curr1 = *fft->spectrum[1];
 			glClear(GL_COLOR_BUFFER_BIT);
 			glBegin(GL_POINTS);
 
-			// Iterate i up to 2*pi, i.e., 360 degree
-			// plot point with slight increment in angle,
-			// so, it will look like a continuous figure
-
-			// Loop is to draw outer circle
-			for (i = 0; i < 6.29; i += 0.001)
-			{
-				x = 20000 * curr0 * cos(i);
-				y = 20000 * curr0 * sin(i);
-				// For every loop, 2nd glVertex function is
-				// to make smaller figure in motion
-				glVertex2i(x , y / 2 - 100 * sin(j));
+			if (j < 3) {
+				// ------ First 'speaker' -------
+				//smallest radius
+				for (i = 0; i < 6.29; i += 0.001)
+				{
+					x = 10 * 1000 * curr0 * cos(i);
+					y = 10 * 1000 * curr0 * sin(i);
+					glVertex2i(x / 2 - 250, y / 2);
+				}
+				//middle radius
+				for (i = 0; i < 6.29; i += 0.001)
+				{
+					x = 50 * 1000 * curr0 * cos(i);
+					y = 50 * 1000 * curr0 * sin(i);
+					glVertex2i(x / 2 - 250, y / 2);
+				}
+				// largest radius
+				for (i = 0; i < 6.29; i += 0.001)
+				{
+					x = 80 * 1000 * curr0 * cos(i);
+					y = 80 * 1000 * curr0 * sin(i);
+					glVertex2i(x / 2 - 250, y / 2);
+				}
+				// ------ Second 'speaker' -------
+				//smallest radius
+				for (i = 0; i < 6.29; i += 0.001)
+				{
+					x = 10 * 1000 * curr1 * cos(i);
+					y = 10 * 1000 * curr1 * sin(i);
+					glVertex2i(x / 2 + 250, y / 2);
+				}
+				//middle radius
+				for (i = 0; i < 6.29; i += 0.001)
+				{
+					x = 50 * 1000 * curr1 * cos(i);
+					y = 50 * 1000 * curr1 * sin(i);
+					glVertex2i(x / 2 + 250, y / 2);
+				}
+				// largest radius
+				for (i = 0; i < 6.29; i += 0.001)
+				{
+					x = 80 * 1000 * curr1 * cos(i);
+					y = 80 * 1000 * curr1 * sin(i);
+					glVertex2i(x / 2 + 250, y / 2);
+				}
 			}
-			// Loop is to draw outer circle
-			for (i = 0; i < 6.29; i += 0.001)
-			{
-				x = 20000 * curr0 * cos(i);
-				y = 20000 * curr0 * sin(i);
-				// For every loop, 2nd glVertex function is
-				// to make smaller figure in motion
-				glVertex2i(x, y / 2 - 100 * sin(j));
-			}
-			// Loop is to draw outer circle
-			for (i = 0; i < 6.29; i += 0.001)
-			{
-				x = 10000 * curr0 * cos(i);
-				y = 10000 * curr0 * sin(i);
-				// For every loop, 2nd glVertex function is
-				// to make smaller figure in motion
-				glVertex2i(x, y / 2 - 100 * sin(j));
-			}
-			// Loop is to draw outer circle
-			for (i = 0; i < 6.29; i += 0.001)
-			{
-				x = 25000 * curr0 * cos(i);
-				y = 25000 * curr0 * sin(i);
-				// For every loop, 2nd glVertex function is
-				// to make smaller figure in motion
-				glVertex2i(x, y / 2 - 100 * sin(j));
+			else if (j < 800) {
+				if (cos(j) > .67) {
+					glColor3f(1.0, 1.0, 1.0);
+				}
+				else if (cos(j) > .33) {
+					glColor3f(1.0, 1.0, 1.0);
+				}
+				else {
+					glColor3f(1.0, 1.0, 1.0);
+				}
+				// ------ First 'speaker' -------
+				//smallest radius
+				for (i = 0; i < 6.29; i += 0.001)
+				{
+					x = 50 * 1000 * curr0 * cos(i);
+					y = 50 * 1000 * curr0 * sin(i);
+					glVertex2i(x / 2 - 250, y / 2);
+				}
+				//middle radius
+				for (i = 0; i < 6.29; i += 0.001)
+				{
+					x = 80 * 1000 * curr0 * cos(i);
+					y = 80 * 1000 * curr0 * sin(i);
+					glVertex2i(x / 2 - 250, y / 2);
+				}
+				// largest radius
+				for (i = 0; i < 6.29; i += 0.001)
+				{
+					x = 120 * 1000 * curr0 * cos(i);
+					y = 120 * 1000 * curr0 * sin(i);
+					glVertex2i(x / 2 - 250, y / 2);
+				}
+				// ------ Second 'speaker' -------
+				//smallest radius
+				for (i = 0; i < 6.29; i += 0.001)
+				{
+					x = 50 * 1000 * curr1 * cos(i);
+					y = 50 * 1000 * curr1 * sin(i);
+					glVertex2i(x / 2 + 250, y / 2);
+				}
+				//middle radius
+				for (i = 0; i < 6.29; i += 0.001)
+				{
+					x = 80 * 1000 * curr1 * cos(i);
+					y = 80 * 1000 * curr1 * sin(i);
+					glVertex2i(x / 2 + 250, y / 2);
+				}
+				// largest radius
+				for (i = 0; i < 6.29; i += 0.001)
+				{
+					x = 120 * 1000 * curr1 * cos(i);
+					y = 120 * 1000 * curr1 * sin(i);
+					glVertex2i(x / 2 + 250, y / 2);
+				}
 			}
 			glEnd();
 			glFlush();
@@ -122,7 +179,7 @@ int main(int argc, char** argv)
 	ERRCHECK(res);
 
 	FMOD::Sound *sound;
-	FMOD::Channel          *channel = 0;
+	FMOD::Channel *channel = 0;
 
 	//DSP stuff for analyzing sound
 	FMOD::ChannelGroup *masterChannelGroup = NULL;
