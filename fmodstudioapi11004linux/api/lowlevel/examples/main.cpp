@@ -5,163 +5,128 @@
 //#include <fmod_studio.h>
 //#include <fmod_errors.h>
 #include <iostream>
+#include <math.h>
 
+// global declaration
+int x, y;
+float i, j;
+FMOD::System *sys;
+FMOD::DSP *dsp;
+FMOD_RESULT res;
 
-
-/// this is a pointer to the mp3 stream we will be reading from the disk.
-//FSOUND_STREAM* g_mp3_stream = NULL;
-
-
-//------------------------------------------------------------	OnReshape()
-//
-
-
-
-	FMOD::System *sys;
-	FMOD::DSP *dsp ;
-	FMOD_RESULT res;
-
-
-void ERRCHECK(FMOD_RESULT result){
-	if(result != FMOD_OK ){
-		std::cout <<"failed";
+void ERRCHECK(FMOD_RESULT result) {
+	if (result != FMOD_OK) {
+		std::cout << "failed";
 	}
 
 };
 
-
-void OnReshape(int w, int h)
+// Initialization function
+void myInit(void)
 {
-	if (h==0) {
-		h=1;
-	}
+	// Reset background color with black (since all three argument is 0.0)
+	glClearColor(0.0, 0.0, 0.0, 1.0);
 
-	// set the drawable region of the window
-	glViewport(0,0,w,h);
+	// Set picture color to green (in RGB model)
+	// as only argument corresponding to G (Green) is 1.0 and rest are 0.0
+	glColor3f(0.0, 1.0, 0.0);
 
-	// set up the projection matrix 
+	// Set width of point to one unit
+	glPointSize(1.0);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	// just use a perspective projection
-	glOrtho(0,532,0,10,-100,100);
-
-	// go back to modelview matrix so we can move the objects about
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+	// Set window size in X- and Y- direction
+	gluOrtho2D(-780, 780, -420, 420);
 }
 
-//------------------------------------------------------------	OnDraw()
-//
-void OnDraw() {
-
-	// clear the screen & depth buffer
-	glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
-
-	// clear the previous transform
-	glLoadIdentity();
-
+// Function to display animation
+void display(void)
+{
 
 	//update the FMOD system
 	res = sys->update();
-	
+
 	void* spectrumData;
-	res = dsp->getParameterData(FMOD_DSP_FFT_SPECTRUMDATA, (void**)&spectrumData, 0, 0,0);
+	res = dsp->getParameterData(FMOD_DSP_FFT_SPECTRUMDATA, (void**)&spectrumData, 0, 0, 0);
 	FMOD_DSP_PARAMETER_FFT *fft = (FMOD_DSP_PARAMETER_FFT*)spectrumData;
 
-	
-	if(fft){
-		std::cout<<" channels:" <<fft->numchannels;
-		for(int i=0;i<fft->numchannels;++i){
-			glBegin(GL_POLYGON);
-			glColor3f(1.0-4*(*fft->spectrum[i]),4*(*fft->spectrum[i]),0);
+	if (fft) {
+		// Outer loop to make figure moving
+		// loop variable j iterated up to 10000,
+		// indicating that figure will be in motion for large amount of time
+		// around 10000/6.29 = 1590 time it will revolve
+		// j is incremented by small value to make motion smoother
+		for (j = 0; j < 10000; j += 0.01)
+		{
+			float curr0 = *fft->spectrum[0];
+			float curr1 = *fft->spectrum[1];
+			glClear(GL_COLOR_BUFFER_BIT);
+			glBegin(GL_POINTS);
 
+			// Iterate i up to 2*pi, i.e., 360 degree
+			// plot point with slight increment in angle,
+			// so, it will look like a continuous figure
 
-			glVertex2f(30, 5+ 500*(*fft->spectrum[i]));
-			glVertex2f(60, 4+ 500*(*fft->spectrum[i]));
-			glVertex2f(300, 1+ 500*(*fft->spectrum[i]));
-			glVertex2f(160, 2+ 500*(*fft->spectrum[i]));
-
-			//speck
-			//glVertex2f(10+i,0.5+20*(*fft->spectrum[i]));
+			// Loop is to draw outer circle
+			for (i = 0; i < 6.29; i += 0.001)
+			{
+				x = 20000 * curr0 * cos(i);
+				y = 20000 * curr0 * sin(i);
+				// For every loop, 2nd glVertex function is
+				// to make smaller figure in motion
+				glVertex2i(x , y / 2 - 100 * sin(j));
+			}
+			// Loop is to draw outer circle
+			for (i = 0; i < 6.29; i += 0.001)
+			{
+				x = 20000 * curr0 * cos(i);
+				y = 20000 * curr0 * sin(i);
+				// For every loop, 2nd glVertex function is
+				// to make smaller figure in motion
+				glVertex2i(x, y / 2 - 100 * sin(j));
+			}
+			// Loop is to draw outer circle
+			for (i = 0; i < 6.29; i += 0.001)
+			{
+				x = 10000 * curr0 * cos(i);
+				y = 10000 * curr0 * sin(i);
+				// For every loop, 2nd glVertex function is
+				// to make smaller figure in motion
+				glVertex2i(x, y / 2 - 100 * sin(j));
+			}
+			// Loop is to draw outer circle
+			for (i = 0; i < 6.29; i += 0.001)
+			{
+				x = 25000 * curr0 * cos(i);
+				y = 25000 * curr0 * sin(i);
+				// For every loop, 2nd glVertex function is
+				// to make smaller figure in motion
+				glVertex2i(x, y / 2 - 100 * sin(j));
+			}
 			glEnd();
-
+			glFlush();
+			res = sys->update();
+			std::cout << curr0 << " " << curr1 << std::endl;
 		}
 	}
-
-
-	
-	
-
-	// FSOUND_DSP_GetSpectrum returns a pointer to an array of 512
-	// floats representing the frequencies of the sound. 
-	// 
-	//const float* spectrum = FMOD::FSOUND_DSP_GetSpectrum();
-
-	// just walk through the array and render end spectrum value
-	/*glBegin(GL_LINE_STRIP);
-	for(unsigned int i=0;i!=512;++i) 
-	{
-
-		glColor3f(1.0,4.0, i/511);
-		glVertex2f(10+i,2+i);
-		//glColor3f(1.0-4*spectrum[i],4*spectrum[i],0);
-		//glVertex2f(10+i,0.5+20*spectrum[i]);
-	}
-	glEnd();*/
-
-	// currently we've been drawing to the back buffer, we need
-	// to swap the back buffer with the front one to make the image visible
-	glutSwapBuffers();
-	//glutPostRedisplay();
 }
 
-//------------------------------------------------------------	OnIdle()
-//
-void OnIdle() {
-	// enable depth testing
-	glEnable(GL_DEPTH_TEST);
-	glutPostRedisplay();
-}
-
-
-//------------------------------------------------------------	OnInit()
-//
-void OnInit() {
-	// enable depth testing
-	glEnable(GL_DEPTH_TEST);
-}
-
-//------------------------------------------------------------	OnExit()
-//
-void OnExit() {
-
-	// Stop and close the mp3 file
-	//FSOUND_Stream_Stop( g_mp3_stream );
-	//FSOUND_Stream_Close( g_mp3_stream );
-
-	// kill off fmod
-	//FSOUND_Close();
-}
-
-
-//------------------------------------------------------------	main()
-//
-int main(int argc,char** argv) {
-
-	
+// Driver Program
+int main(int argc, char** argv)
+{
 	res = FMOD::System_Create(&sys);
 	ERRCHECK(res);
 
-	res = sys->init(32, FMOD_INIT_NORMAL, 0);	
+	res = sys->init(32, FMOD_INIT_NORMAL, 0);
 	ERRCHECK(res);
 
-	 FMOD::Sound *sound;
-  	 FMOD::Channel          *channel = 0;
-	
+	FMOD::Sound *sound;
+	FMOD::Channel          *channel = 0;
+
 	//DSP stuff for analyzing sound
-	 FMOD::ChannelGroup *masterChannelGroup = NULL;
-	
+	FMOD::ChannelGroup *masterChannelGroup = NULL;
+
 	const int windowSize = 1024;
 
 	res = sys->getMasterChannelGroup(&masterChannelGroup);
@@ -173,50 +138,37 @@ int main(int argc,char** argv) {
 	res = dsp->setParameterInt(FMOD_DSP_FFT_WINDOWTYPE, FMOD_DSP_FFT_WINDOW_HANNING);
 	ERRCHECK(res);
 
-	res = dsp->setParameterInt(FMOD_DSP_FFT_WINDOWSIZE, windowSize*2);
+	res = dsp->setParameterInt(FMOD_DSP_FFT_WINDOWSIZE, windowSize * 2);
 	ERRCHECK(res);
 
 	res = masterChannelGroup->addDSP(FMOD_CHANNELCONTROL_DSP_HEAD, dsp);
 	ERRCHECK(res);
 
 	//creating the sound
-	res = sys->createSound("../media/Hawaii5O.mp3", FMOD_DEFAULT, 0, &sound);
+	res = sys->createSound("media/Hawaii5O.mp3", FMOD_DEFAULT, 0, &sound);
 	ERRCHECK(res);
 
 	res = sys->playSound(sound, 0, false, &channel);
 	ERRCHECK(res);
-	
 
-	
-	// initialise glut
-	glutInit(&argc,argv);
+	glutInit(&argc, argv);
 
-	// request a depth buffer, RGBA display mode, and we want double buffering
-	glutInitDisplayMode(GLUT_DEPTH|GLUT_RGBA|GLUT_DOUBLE);
+	// Display mode which is of RGB (Red Green Blue) type
+	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 
-	// set the initial window size
-	glutInitWindowSize(640,480);
+	// Declares window size
+	glutInitWindowSize(1360, 768);
 
-	// create the window
-	glutCreateWindow("Music Visualizer");
+	// Declares window position which is (0, 0)
+	// means lower left corner will indicate position (0, 0)
+	glutInitWindowPosition(0, 0);
 
-	// set the function to use to draw our scene
-	glutDisplayFunc(OnDraw);
+	// Name to window
+	glutCreateWindow("Revolution");
 
-	// set the function to handle changes in screen size
-	glutReshapeFunc(OnReshape);
-
-	// set the idle callback
-	glutIdleFunc(OnIdle);
-
-	// run our custom initialisation
-	OnInit();
-
-	// set the function to be called when we exit
-	atexit(OnExit);
-
-	// this function runs a while loop to keep the program running.
+	// Call to myInit()
+	myInit();
+	glutDisplayFunc(display);
 	glutMainLoop();
-	return 0;
 }
 
