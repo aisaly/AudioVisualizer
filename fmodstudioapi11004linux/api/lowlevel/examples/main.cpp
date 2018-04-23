@@ -1,11 +1,12 @@
 
-#include <stdlib.h>
-#include <GL/glut.h>
-#include "fmod.hpp"
-//#include <fmod_studio.h>
-//#include <fmod_errors.h>
+// C Program to illustrate 
+// OpenGL animation for revolution
+
+#include <stdio.h>
 #include <iostream>
+#include <GL/glut.h>
 #include <math.h>
+#include "fmod.hpp"
 
 // global declaration
 int x, y;
@@ -58,9 +59,9 @@ void display(void)
 			float curr0 = *fft->spectrum[0];
 			float curr1 = *fft->spectrum[1];
 			glClear(GL_COLOR_BUFFER_BIT);
-			glBegin(GL_POINTS);
 
-			if (j < 3) {
+			if (j < 5) {
+				glBegin(GL_POINTS);
 				// ------ First 'speaker' -------
 				//smallest radius
 				for (i = 0; i < 6.29; i += 0.001)
@@ -105,16 +106,64 @@ void display(void)
 					y = 80 * 1000 * curr1 * sin(i);
 					glVertex2i(x / 2 + 250, y / 2);
 				}
+				glEnd();
+
+			}
+
+			else if (j < 10) {
+				glClear(GL_COLOR_BUFFER_BIT);
+				glBegin(GL_TRIANGLES);
+
+				for (i = 0; i < 6.29; i += 0.001)
+				{
+					x = 500 * 1000 * curr1 * cos(i);
+					y = 500 * 1000 * curr1 * sin(i);
+
+
+					//Crazy tunnel
+					glVertex2i(x / 2, y / 2);
+					glVertex2i(x / 3, y / 3);
+					glVertex2i(x / 4, y / 4);
+
+
+					//This will create concert/stage light effects from center of screen
+					//glVertex2i(x/2*10, y+50); //tri1 first vertex
+					//glVertex2i(x/2*200, y+250);  //tri1 second vertex
+					//glVertex2i(x/2*150, y+200); //tri1 third vertex
+
+					//a single triangle on the right of the screen
+					//glVertex2i(10*j, -1*50/j); //tri2 first vertex
+					//glVertex2i(200*j, 250/j);  //tri2 second vertex
+					//glVertex2i(125*j, -1*200/j); //tri2 third vertex
+
+					//Trying to create rotation here
+					/*glTranslatef(j*10.0, j*50.0, 0);
+					glRotatef(j*2, 0, 0, 1.0);
+					glFlush();*/
+
+					//change color with frequency
+					if (cos(j) > .67) {
+						glColor3f(curr0 * 700, .5, .5);
+					}
+					else if (cos(j) > .33) {
+						glColor3f(curr0 * 700, .5, .57);
+					}
+					else {
+						glColor3f(curr0 * 700, .5, .6);
+					}
+				}
+				glEnd();
 			}
 			else if (j < 800) {
+				glBegin(GL_POINTS);
 				if (cos(j) > .67) {
-					glColor3f(1.0, 1.0, 1.0);
+					glColor3f(curr0*700, .5, .5);
 				}
 				else if (cos(j) > .33) {
-					glColor3f(1.0, 1.0, 1.0);
+					glColor3f(.5, curr0*700, .5);
 				}
 				else {
-					glColor3f(1.0, 1.0, 1.0);
+					glColor3f(.5, .5, curr0*700);
 				}
 				// ------ First 'speaker' -------
 				//smallest radius
@@ -160,11 +209,10 @@ void display(void)
 					y = 120 * 1000 * curr1 * sin(i);
 					glVertex2i(x / 2 + 250, y / 2);
 				}
+				glEnd();
 			}
-			glEnd();
 			glFlush();
 			res = sys->update();
-			std::cout << curr0 << " " << curr1 << std::endl;
 		}
 	}
 }
@@ -227,5 +275,6 @@ int main(int argc, char** argv)
 	myInit();
 	glutDisplayFunc(display);
 	glutMainLoop();
+}	glutMainLoop();
 }
 
