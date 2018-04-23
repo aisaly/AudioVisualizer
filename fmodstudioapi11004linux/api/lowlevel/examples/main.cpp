@@ -5,7 +5,7 @@
 //#include <fmod_studio.h>
 //#include <fmod_errors.h>
 #include <iostream>
-
+#include<math.h>
 
 
 /// this is a pointer to the mp3 stream we will be reading from the disk.
@@ -20,7 +20,10 @@
 	FMOD::System *sys;
 	FMOD::DSP *dsp ;
 	FMOD_RESULT res;
+	float previous =0;
+	float currentPos =2;
 
+	int theme=1;
 
 void ERRCHECK(FMOD_RESULT result){
 	if(result != FMOD_OK ){
@@ -53,8 +56,17 @@ void OnReshape(int w, int h)
 
 //------------------------------------------------------------	OnDraw()
 //
-void OnDraw() {
 
+
+
+void OnDraw() {
+	char instructions[] = "press any key to begin";
+	glColor3f(1,1,1);
+	glRasterPos2i(50,5);
+	for(int k=0; k<22;k++){
+		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, instructions[k]);		
+
+	}
 	// clear the screen & depth buffer
 	glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
 
@@ -69,22 +81,133 @@ void OnDraw() {
 	res = dsp->getParameterData(FMOD_DSP_FFT_SPECTRUMDATA, (void**)&spectrumData, 0, 0,0);
 	FMOD_DSP_PARAMETER_FFT *fft = (FMOD_DSP_PARAMETER_FFT*)spectrumData;
 
-	
-	if(fft){
-		std::cout<<" channels:" <<fft->numchannels;
-		for(int i=0;i<fft->numchannels;++i){
+	if(theme == 1){ //flower
+		
+		if(fft){
+		
+
+		for(int i=0;i<1;i++){
+			
+			double x;
+			double y;
+			
+
+			glClearColor(.5,.5,1,1);
+			//FLOWER	
+			glBegin(GL_TRIANGLE_FAN);
+			glColor3f(.3,.1,.1);
+			glVertex2f(250, 6);
+			for(double j=0;j<6.3;j+=0.78625){	
+
+				x = 250+30*cos(j)+100*(*fft->spectrum[i]);
+				y= 6.5+0.7*sin(j)+100*(*fft->spectrum[i]);
+				glVertex2f(x,y);
+				
+			}
+			glEnd();
+
+			//petals
+			glBegin(GL_TRIANGLES);
+			glColor3f(.8,.8,0);
+			
+			for(double j=0;j<6.3;j+=0.78625){	
+
+				x = 250+70*cos(j)*400*(*fft->spectrum[i]);
+				y= 6.5+1.6*sin(j)*400*(*fft->spectrum[i]);
+				glVertex2f(x,y);
+				glVertex2f(x+40*cos(j-0.8), y+sin(j-0.8));
+				glVertex2f(x-40*cos(j+0.8), y-sin(j+0.8));
+			}
+			glEnd();
+
+			//stem
 			glBegin(GL_POLYGON);
-			glColor3f(1.0-4*(*fft->spectrum[i]),4*(*fft->spectrum[i]),0);
+			glColor3f(0.2,0.9,0.2);
+
+			glVertex2f(245,0.1);
+			glVertex2f(245,6);
+			glVertex2f(255, 6);
+			glVertex2f(255, 0.1);
+			glEnd();
+
+			//leaf
+			glBegin(GL_POLYGON);
+			glColor3f(0.2,0.9,0.2);
+
+			glVertex2f(250,3);
+			glVertex2f(250,2);
+			glVertex2f(285, 2.8);
+			glEnd();
+			}
+		}
+
+	}
+	else if(theme ==2){ //square
 
 
-			glVertex2f(30, 5+ 500*(*fft->spectrum[i]));
-			glVertex2f(60, 4+ 500*(*fft->spectrum[i]));
-			glVertex2f(300, 1+ 500*(*fft->spectrum[i]));
-			glVertex2f(160, 2+ 500*(*fft->spectrum[i]));
+	if(fft){
+		
 
+		for(int i=0;i<1;i++){
+			
+			double x;
+			double y;
+			if(*fft->spectrum[i] < previous){
+				currentPos =currentPos- 0.25;
+			}
+			else{
+				currentPos= currentPos + 0.25;
+			}
+			if(currentPos>7){
+				currentPos=7;
+			}
+
+			
+
+			//smooth cube
+			/*glBegin(GL_POLYGON);
+			glColor3f(1.0-4*(*fft->spectrum[i]),0.5+100*(*fft->spectrum[i]),0);
+			
+			glVertex2f(300,currentPos);
+			glVertex2f(300, currentPos - 3);
+			glVertex2f(60, 5.5);
+			glVertex2f(60, 2.5);
+			glEnd();*/
+
+			//rectangles
+			glBegin(GL_POLYGON);
+			glColor3f(1.0-4*(*fft->spectrum[i]),0.5+100*(*fft->spectrum[i]),0);
+			
+			glVertex2f(50, 4+ 200*(*fft->spectrum[i]));
+			glVertex2f(50, 1);
+			glVertex2f(30, 1);
+			glVertex2f(30, 4+ 200*(*fft->spectrum[i]));
+			glEnd();
+
+			//rectangles
+			glBegin(GL_POLYGON);
+			glColor3f(1.0-4*(*fft->spectrum[i]),0.5+100*(*fft->spectrum[i]),0);
+			
+			glVertex2f(90, 5+ 500*(*fft->spectrum[i]));
+			glVertex2f(90, 1);
+			glVertex2f(70, 1);
+			glVertex2f(70, 5+ 500*(*fft->spectrum[i]));
+			glEnd();
+
+			//rectangles
+			glBegin(GL_POLYGON);
+			glColor3f(1.0-4*(*fft->spectrum[i]),0.5+100*(*fft->spectrum[i]),0);
+			
+			glVertex2f(130, 3+ 200*(*fft->spectrum[i]));
+			glVertex2f(130, 1);
+			glVertex2f(110, 1);
+			glVertex2f(110, 3+ 200*(*fft->spectrum[i]));
+			glEnd();
+			
+			previous = *fft->spectrum[i];
 			//speck
 			//glVertex2f(10+i,0.5+20*(*fft->spectrum[i]));
-			glEnd();
+			}
 
 		}
 	}
@@ -147,6 +270,43 @@ void OnExit() {
 
 //------------------------------------------------------------	main()
 //
+
+
+void
+keyboard(unsigned char key, int x, int y)
+{
+    GLint params[2];
+    
+    switch (key) {
+    case '1':
+        theme = 1;
+        break;
+        
+    case '2':
+       std::cout<<"t";
+	theme = 2;
+        break;
+        
+    case '3':
+       // performance = !performance;
+        break;
+        
+    case 'm':
+       
+        break;
+
+   case 27:
+        exit(0);
+        break;
+    }
+    
+    glutPostRedisplay();
+}
+
+void menu(int item){
+        keyboard((unsigned char)item, 0, 0);
+}
+
 int main(int argc,char** argv) {
 
 	
@@ -203,11 +363,27 @@ int main(int argc,char** argv) {
 	// set the function to use to draw our scene
 	glutDisplayFunc(OnDraw);
 
+	glutKeyboardFunc(keyboard);
+
 	// set the function to handle changes in screen size
 	glutReshapeFunc(OnReshape);
 
 	// set the idle callback
 	glutIdleFunc(OnIdle);
+	
+	    glutCreateMenu(menu);
+    glutAddMenuEntry("Smooth", 0);
+    glutAddMenuEntry("", 0);
+    glutAddMenuEntry("", 0);
+    glutAddMenuEntry("[1]   Flower Theme", '1');
+    glutAddMenuEntry("[2]   Rectangles", '2');
+    glutAddMenuEntry("[3]   Toggle face/smooth normals", 'n');
+    glutAddMenuEntry("[4]   Toggle bounding box on/off", 'b');
+    glutAddMenuEntry("[5]   Toggle frame rate on/off", 'p');
+
+    glutAddMenuEntry("", 0);
+    glutAddMenuEntry("[Esc] Quit", 27);
+    glutAttachMenu(GLUT_RIGHT_BUTTON);
 
 	// run our custom initialisation
 	OnInit();
