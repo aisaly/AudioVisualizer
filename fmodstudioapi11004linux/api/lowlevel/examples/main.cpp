@@ -20,6 +20,13 @@
 	FMOD::System *sys;
 	FMOD::DSP *dsp ;
 	FMOD_RESULT res;
+	 FMOD::Sound *sound;
+	FMOD::Sound *sound2;
+	FMOD::Sound *sound3;
+  	 FMOD::Channel          *channel = 0;
+	FMOD::Channel          *channel2 = 0;
+	FMOD::Channel  *channel3 = 0;
+	
 	float previous =0;
 	float currentPos =2;
 
@@ -290,9 +297,23 @@ keyboard(unsigned char key, int x, int y)
     case '3':
        // performance = !performance;
         break;
-        
-    case 'm':
-       
+
+     case '4': //hawaii
+	channel->setPaused(false);
+	channel3->setPaused(true);
+       	channel2->setPaused(true);
+        break;        
+
+    case '5': //singing
+	channel->setPaused(true);
+	channel3->setPaused(true);
+       	channel2->setPaused(false);
+        break;
+
+   case '6'://sunny
+	channel->setPaused(true);
+       	channel2->setPaused(true);
+	channel3->setPaused(false);
         break;
 
    case 27:
@@ -316,9 +337,7 @@ int main(int argc,char** argv) {
 	res = sys->init(32, FMOD_INIT_NORMAL, 0);	
 	ERRCHECK(res);
 
-	 FMOD::Sound *sound;
-  	 FMOD::Channel          *channel = 0;
-	
+
 	//DSP stuff for analyzing sound
 	 FMOD::ChannelGroup *masterChannelGroup = NULL;
 	
@@ -340,10 +359,15 @@ int main(int argc,char** argv) {
 	ERRCHECK(res);
 
 	//creating the sound
-	res = sys->createSound("../media/Hawaii5O.mp3", FMOD_DEFAULT, 0, &sound);
+	res = sys->createSound("../media/Hawaii5O.mp3", FMOD_LOOP_NORMAL, 0, &sound);
+	res= sys->createSound("../media/singing.wav", FMOD_LOOP_NORMAL, 0, &sound2);
+	res = sys->createSound("../media/bensound-sunny.mp3", FMOD_LOOP_NORMAL, 0, &sound3);
+
 	ERRCHECK(res);
 
 	res = sys->playSound(sound, 0, false, &channel);
+	res = sys->playSound(sound2, 0, true, &channel2);
+	res = sys->playSound(sound3, 0, true, &channel3);
 	ERRCHECK(res);
 	
 
@@ -378,8 +402,9 @@ int main(int argc,char** argv) {
     glutAddMenuEntry("[1]   Flower Theme", '1');
     glutAddMenuEntry("[2]   Rectangles", '2');
     glutAddMenuEntry("[3]   Toggle face/smooth normals", 'n');
-    glutAddMenuEntry("[4]   Toggle bounding box on/off", 'b');
-    glutAddMenuEntry("[5]   Toggle frame rate on/off", 'p');
+    glutAddMenuEntry("[4]   Play Hawaii5O.mp3", '4');
+    glutAddMenuEntry("[5]   Play singing.wav", '5');
+   glutAddMenuEntry("[6]   Play sunny.wav", '6');
 
     glutAddMenuEntry("", 0);
     glutAddMenuEntry("[Esc] Quit", 27);
