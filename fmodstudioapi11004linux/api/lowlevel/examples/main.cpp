@@ -26,6 +26,60 @@ float currentPos = 2;
 int theme = 1;
 double j = 0;
 
+GLuint LoadTexture(const char * filename) {
+	GLuint texture;
+	FILE * file;
+
+	file = fopen(filename, "rb");
+
+	if (file == NULL) return 0;
+	unsigned char info[54];
+	unsigned int dataPos;     // Position in the file where the actual data begins
+	unsigned int width, height;
+	unsigned int size;   // = width*height*3
+
+	fread(info, sizeof(unsigned char), 54, file); // read the 54-byte header
+
+	if (info[0] != 'B' || info[1] != 'M') {
+		printf("Not a correct BMP file\n");
+		return 0;
+	}
+
+	// Read ints from the byte array
+	dataPos = *(int*)&(info[0x0A]);
+	size = *(int*)&(info[0x22]);
+	width = *(int*)&(info[0x12]);
+	height = *(int*)&(info[0x16]);
+
+	// Some BMP files are misformatted, guess missing information
+	if (size == 0)    size = width*height * 4; // 3 : one byte for each Red, Green and Blue component
+	if (dataPos == 0)      dataPos = 54; // The BMP header is done that way
+
+	unsigned char* data = new unsigned char[size]; // allocate 3 bytes per pixel
+	fread(data, sizeof(unsigned char), size, file); // read the rest of the data at once
+	fclose(file);
+
+	for (int i = 0; i < size; i += 4)
+	{
+		unsigned char tmp = data[i];
+		data[i] = data[i + 2];
+		data[i + 2] = tmp;
+	}
+
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	gluBuild2DMipmaps(GL_TEXTURE_2D, 3, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	free(data);
+
+	return texture;
+}
+
 void ERRCHECK(FMOD_RESULT result) {
 	if (result != FMOD_OK) {
 		std::cout << "failed";
@@ -256,122 +310,92 @@ void OnDraw() {
 	}
 
 	else if (theme == 3 && fft) { // speakers
+		glClearColor(1.0, 1.0, 1.0, 1.0);
+		// draw speaker texture
+		GLuint speaker;
+		speaker = LoadTexture("speaker.bmp");
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, speaker);
+		glBegin(GL_POLYGON);
+		glTexCoord2f(0, 0); glVertex3f(-170.0, -30.0, -1.0);
+		glTexCoord2f(0, 1); glVertex3f(-170.0, 50.0, -1.0);
+		glTexCoord2f(1, 1); glVertex3f(-90.0, 50.0, -1.0);
+		glTexCoord2f(1, 0); glVertex3f(-90.0, -30.0, -1.0);
+
+		//glTexCoord2f(0.0, 0.0); glVertex3f(1.0, -1.0, 0.0);
+		//glTexCoord2f(0.0, 1.0); glVertex3f(1.0, 1.0, 0.0);
+		//glTexCoord2f(1.0, 1.0); glVertex3f(2.41421, 1.0, -1.41421);
+		//glTexCoord2f(1.0, 0.0); glVertex3f(2.41421, -1.0, -1.41421);
+		glEnd();
+		glFlush();
+		glDisable(GL_TEXTURE_2D);
+
+		// draw speaker movement
 		float curr0 = *fft->spectrum[0];
 		float curr1 = *fft->spectrum[1];
-		glClearColor(0.0, 0.0, 0.0, 1.0);
-		glClear(GL_COLOR_BUFFER_BIT);
 		glBegin(GL_POINTS);
 		double i;
 		int x, y;
-		if (j < 1) {
-			glBegin(GL_POINTS);
-			// ------ First 'speaker' -------
-			//smallest radius
-			for (i = 0; i < 6.29; i += 0.001)
-			{
-				x = 10 * 1000 * curr0 * cos(i);
-				y = 10 * 1000 * curr0 * sin(i);
-				glVertex2i(x / 2 - 130, y / 2);
-			}
-			//middle radius
-			for (i = 0; i < 6.29; i += 0.001)
-			{
-				x = 30 * 1000 * curr0 * cos(i);
-				y = 30 * 1000 * curr0 * sin(i);
-				glVertex2i(x / 2 - 130, y / 2);
-			}
-			// largest radius
-			for (i = 0; i < 6.29; i += 0.001)
-			{
-				x = 50 * 1000 * curr0 * cos(i);
-				y = 50 * 1000 * curr0 * sin(i);
-				glVertex2i(x / 2 - 130, y / 2);
-			}
-			// ------ Second 'speaker' -------
-			//smallest radius
-			for (i = 0; i < 6.29; i += 0.001)
-			{
-				x = 10 * 1000 * curr1 * cos(i);
-				y = 10 * 1000 * curr1 * sin(i);
-				glVertex2i(x / 2 + 130, y / 2);
-			}
-			//middle radius
-			for (i = 0; i < 6.29; i += 0.001)
-			{
-				x = 50 * 1000 * curr1 * cos(i);
-				y = 50 * 1000 * curr1 * sin(i);
-				glVertex2i(x / 2 + 130, y / 2);
-			}
-			// largest radius
-			for (i = 0; i < 6.29; i += 0.001)
-			{
-				x = 80 * 1000 * curr1 * cos(i);
-				y = 80 * 1000 * curr1 * sin(i);
-				glVertex2i(x / 2 + 130, y / 2);
-			}
-			glEnd();
+		glBegin(GL_POINTS);
+		if (cos(j) > .67) {
+			glColor3f(curr0 * 700, .5, .5);
+		}
+		else if (cos(j) > .33) {
+			glColor3f(.5, curr0 * 700, .5);
 		}
 		else {
-			glBegin(GL_POINTS);
-			if (cos(j) > .67) {
-				glColor3f(curr0 * 700, .5, .5);
-			}
-			else if (cos(j) > .33) {
-				glColor3f(.5, curr0 * 700, .5);
-			}
-			else {
-				glColor3f(.5, .5, curr0 * 700);
-			}
-			// ------ First 'speaker' -------
-			//smallest radius
-			for (i = 0; i < 6.29; i += 0.001)
-			{
-				x = 50 * 1000 * curr0 * cos(i);
-				y = 50 * 1000 * curr0 * sin(i);
-				glVertex2i(x / 2 - 130, y / 2);
-			}
-			//middle radius
-			for (i = 0; i < 6.29; i += 0.001)
-			{
-				x = 80 * 1000 * curr0 * cos(i);
-				y = 80 * 1000 * curr0 * sin(i);
-				glVertex2i(x / 2 - 130, y / 2);
-			}
-			// largest radius
-			for (i = 0; i < 6.29; i += 0.001)
-			{
-				x = 100 * 1000 * curr0 * cos(i);
-				y = 100 * 1000 * curr0 * sin(i);
-				glVertex2i(x / 2 - 130, y / 2);
-			}
-			// ------ Second 'speaker' -------
-			//smallest radius
-			for (i = 0; i < 6.29; i += 0.001)
-			{
-				x = 50 * 1000 * curr1 * cos(i);
-				y = 50 * 1000 * curr1 * sin(i);
-				glVertex2i(x / 2 + 130, y / 2);
-			}
-			//middle radius
-			for (i = 0; i < 6.29; i += 0.001)
-			{
-				x = 80 * 1000 * curr1 * cos(i);
-				y = 80 * 1000 * curr1 * sin(i);
-				glVertex2i(x / 2 + 130, y / 2);
-			}
-			// largest radius
-			for (i = 0; i < 6.29; i += 0.001)
-			{
-				x = 100 * 1000 * curr1 * cos(i);
-				y = 100 * 1000 * curr1 * sin(i);
-				glVertex2i(x / 2 + 130, y / 2);
-			}
-			glEnd();
+			glColor3f(.5, .5, curr0 * 700);
 		}
+		// ------ First 'speaker' -------
+		//smallest radius
+		for (i = 0; i < 6.29; i += 0.001)
+		{
+			x = 50 * 1000 * curr0 * cos(i);
+			y = 50 * 1000 * curr0 * sin(i);
+			glVertex2i(x / 2 - 130, y / 2);
+		}
+		//middle radius
+		for (i = 0; i < 6.29; i += 0.001)
+		{
+			x = 80 * 1000 * curr0 * cos(i);
+			y = 80 * 1000 * curr0 * sin(i);
+			glVertex2i(x / 2 - 130, y / 2);
+		}
+		// largest radius
+		for (i = 0; i < 6.29; i += 0.001)
+		{
+			x = 100 * 1000 * curr0 * cos(i);
+			y = 100 * 1000 * curr0 * sin(i);
+			glVertex2i(x / 2 - 130, y / 2);
+		}
+		// ------ Second 'speaker' -------
+		//smallest radius
+		for (i = 0; i < 6.29; i += 0.001)
+		{
+			x = 50 * 1000 * curr1 * cos(i);
+			y = 50 * 1000 * curr1 * sin(i);
+			glVertex2i(x / 2 + 130, y / 2);
+		}
+		//middle radius
+		for (i = 0; i < 6.29; i += 0.001)
+		{
+			x = 80 * 1000 * curr1 * cos(i);
+			y = 80 * 1000 * curr1 * sin(i);
+			glVertex2i(x / 2 + 130, y / 2);
+		}
+		// largest radius
+		for (i = 0; i < 6.29; i += 0.001)
+		{
+			x = 100 * 1000 * curr1 * cos(i);
+			y = 100 * 1000 * curr1 * sin(i);
+			glVertex2i(x / 2 + 130, y / 2);
+		}
+		glEnd();
 		j += .01;
 	}
 
-	else if (theme == 4) { // tunnel trip
+	else if (theme == 4 && fft) { // tunnel trip
 		glClearColor(0.0, 0.0, 0.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glBegin(GL_TRIANGLES);
@@ -395,6 +419,53 @@ void OnDraw() {
 		}
 		glEnd();
 
+	}
+
+	else if (theme == 5 && fft) {
+		float curr0 = *fft->spectrum[0];
+		float curr1 = *fft->spectrum[1];
+		glClear(GL_COLOR_BUFFER_BIT);
+		glLineWidth(3.0);
+		glColor3f(0.5, 0, 1.0);
+		glClearColor(1.0, 1.0, 1.0, 1.0);
+		GLfloat fu[4];
+		static GLfloat ctrlPoints[4][3] = { { -300, -150, 0 },{ -100, 175, 0 },{ 100, 150, 0 },{ 300, -150, 0 } };
+		ctrlPoints[0][1] -= -10000 * curr0;
+		ctrlPoints[1][1] += -10000 * curr0;
+		ctrlPoints[2][1] += -10000 * curr0;
+		ctrlPoints[3][1] -= -10000 * curr0;
+		glBegin(GL_POINTS);
+		for (int i = 0; i < 4; i++)
+		{
+			glVertex2i(ctrlPoints[i][0], ctrlPoints[i][1]);
+		}
+		glEnd();
+		glBegin(GL_LINE_STRIP);
+		glColor3f(0, 0, 0);
+		int subNum = 50;
+		for (int i = 0; i <= subNum; i++)
+		{
+
+			GLfloat u = i / (GLfloat)subNum;
+			GLfloat u2 = u*u;
+			GLfloat u3 = u2*u;
+			fu[0] = -u3 / 6.0 + u2 / 2.0 - u / 2.0 + 1.0 / 6.0;
+			fu[1] = u3 / 2.0 - u2 + 2.0 / 3.0;
+			fu[2] = -u3 / 2.0 + u2 / 2.0 + u / 2.0 + 1.0 / 6.0;
+			fu[3] = u3 / 6.0;
+
+			GLfloat x = 0.0;
+			GLfloat y = 0.0;
+
+			for (int k = 0; k < 4; k++)
+			{
+				x += fu[k] * ctrlPoints[k][0];
+				y += fu[k] * ctrlPoints[k][1];
+			}
+			printf("x=%g  y=%g\n", x, y);
+			glVertex2i(x, y);
+		}
+		glEnd();
 	}
 	// FSOUND_DSP_GetSpectrum returns a pointer to an array of 512
 	// floats representing the frequencies of the sound. 
@@ -477,19 +548,23 @@ keyboard(unsigned char key, int x, int y)
 		theme = 4;
 		break;
 
-	case '5': //hawaii
+	case '5':
+		theme = 5;
+		break;
+
+	case '6': //hawaii
 		channel->setPaused(false);
 		channel3->setPaused(true);
 		channel2->setPaused(true);
 		break;
 
-	case '6': //singing
+	case '7': //singing
 		channel->setPaused(true);
 		channel3->setPaused(true);
 		channel2->setPaused(false);
 		break;
 
-	case '7'://sunny
+	case '8'://sunny
 		channel->setPaused(true);
 		channel2->setPaused(true);
 		channel3->setPaused(false);
@@ -584,9 +659,10 @@ int main(int argc, char** argv) {
 	glutAddMenuEntry("[2]   Bars", '2');
 	glutAddMenuEntry("[3]   Speakers", '3');
 	glutAddMenuEntry("[4]   Tunnel", '4');
-	glutAddMenuEntry("[5]   Play Hawaii5O.mp3", '5');
-	glutAddMenuEntry("[6]   Play singing.wav", '6');
-	glutAddMenuEntry("[7]   Play sunny.wav", '7');
+	glutAddMenuEntry("[5]   Spline??", '5');
+	glutAddMenuEntry("[6]   Play Hawaii5O.mp3", '6');
+	glutAddMenuEntry("[7]   Play singing.wav", '7');
+	glutAddMenuEntry("[8]   Play sunny.wav", '8');
 
 	glutAddMenuEntry("", 0);
 	glutAddMenuEntry("[Esc] Quit", 27);
