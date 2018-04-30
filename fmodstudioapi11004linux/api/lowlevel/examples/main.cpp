@@ -35,35 +35,39 @@ GLuint LoadTexture(const char * filename) {
 	if (file == NULL) return 0;
 	unsigned char info[54];
 	unsigned int dataPos;     // Position in the file where the actual data begins
-	unsigned int width, height;
-	unsigned int size;   // = width*height*3
+	unsigned int width, height, size;
 
-	fread(info, sizeof(unsigned char), 54, file); // read the 54-byte header
+	fread(info, sizeof(unsigned char), 54, file); // read header
 
 	if (info[0] != 'B' || info[1] != 'M') {
 		printf("Not a correct BMP file\n");
 		return 0;
 	}
 
-	// Read ints from the byte array
 	dataPos = *(int*)&(info[0x0A]);
 	size = *(int*)&(info[0x22]);
 	width = *(int*)&(info[0x12]);
 	height = *(int*)&(info[0x16]);
 
-	// Some BMP files are misformatted, guess missing information
-	if (size == 0)    size = width*height * 4; // 3 : one byte for each Red, Green and Blue component
-	if (dataPos == 0)      dataPos = 54; // The BMP header is done that way
+	// if not given, guess missing information
+	if (size == 0) {
+		size = width*height * 4; // one for each component RGBA 
+	}
+	if (dataPos == 0) {
+		dataPos = 54;
+	}
 
-	unsigned char* data = new unsigned char[size]; // allocate 3 bytes per pixel
-	fread(data, sizeof(unsigned char), size, file); // read the rest of the data at once
+	unsigned char* data = new unsigned char[size];
+	fread(data, sizeof(unsigned char), size, file); // read image data
+
 	fclose(file);
 
+	// windows defaults BGR, switch to RGB
 	for (int i = 0; i < size; i += 4)
 	{
-		unsigned char tmp = data[i];
+		unsigned char temp = data[i];
 		data[i] = data[i + 2];
-		data[i + 2] = tmp;
+		data[i + 2] = temp;
 	}
 
 	glGenTextures(1, &texture);
@@ -141,6 +145,7 @@ void OnDraw() {
 				double y;
 
 				glClearColor(.5, .5, 1, 1);
+
 				//FLOWER	
 				glBegin(GL_TRIANGLE_FAN);
 				glColor3f(.3, .1, .1);
@@ -317,16 +322,16 @@ void OnDraw() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, speaker);
-		glBegin(GL_POLYGON);
-		glTexCoord2f(0, 0); glVertex3f(-170.0, -30.0, -1.0);
-		glTexCoord2f(0, 1); glVertex3f(-170.0, 50.0, -1.0);
-		glTexCoord2f(1, 1); glVertex3f(-90.0, 50.0, -1.0);
-		glTexCoord2f(1, 0); glVertex3f(-90.0, -30.0, -1.0);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0, 0); glVertex3f(-172.0, -25.0, -1.0);
+		glTexCoord2f(0, 1); glVertex3f(-172.0, 55.0, -1.0);
+		glTexCoord2f(1, 1); glVertex3f(-92.0, 55.0, -1.0);
+		glTexCoord2f(1, 0); glVertex3f(-92.0, -25.0, -1.0);
 
-		//glTexCoord2f(0.0, 0.0); glVertex3f(1.0, -1.0, 0.0);
-		//glTexCoord2f(0.0, 1.0); glVertex3f(1.0, 1.0, 0.0);
-		//glTexCoord2f(1.0, 1.0); glVertex3f(2.41421, 1.0, -1.41421);
-		//glTexCoord2f(1.0, 0.0); glVertex3f(2.41421, -1.0, -1.41421);
+		glTexCoord2f(0, 0); glVertex3f(88.0, -25.0, -1.0);
+		glTexCoord2f(0, 1); glVertex3f(88.0, 55.0, -1.0);
+		glTexCoord2f(1, 1); glVertex3f(168.0, 55.0, -1.0);
+		glTexCoord2f(1, 0); glVertex3f(168.0, -25.0, -1.0);
 		glEnd();
 		glFlush();
 		glDisable(GL_TEXTURE_2D);
